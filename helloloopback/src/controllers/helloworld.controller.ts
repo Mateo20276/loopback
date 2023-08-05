@@ -8,6 +8,6 @@ import {get} from '@loopback/rest'
 export class HellowordController {
   @get('/helloworld')
   hello(): string{
-    return "Hello World"
+    return "Hello Worlad"
   }
 }
