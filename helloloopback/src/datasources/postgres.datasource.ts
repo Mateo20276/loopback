@@ -1,6 +1,6 @@
 import {inject, lifeCycleObserver, LifeCycleObserver} from '@loopback/core';
 import {juggler} from '@loopback/repository';
-
+//creado con lb4 datasourse
 const config = {
   name: 'postgres',
   connector: 'postgresql',

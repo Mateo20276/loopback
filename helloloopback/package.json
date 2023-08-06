@@ -32,7 +32,8 @@
     "preopenapi-spec": "npm run build",
     "openapi-spec": "node ./dist/openapi-spec",
     "prestart": "npm run rebuild",
-    "start": "node -r source-map-support/register .",
+    "start": "concurrently \"node -r source-map-support/register\" \"docker-compose up\" \"npm run start:loopback\"",
+    "start:loopback": "node .",
     "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
     "rebuild": "npm run clean && npm run build"
   },
@@ -63,6 +64,7 @@
     "@loopback/eslint-config": "^14.0.2",
     "@loopback/testlab": "^6.1.1",
     "@types/node": "^16.18.38",
+    "concurrently": "^8.2.0",
     "eslint": "^8.45.0",
     "source-map-support": "^0.5.21",
     "typescript": "~5.1.6"

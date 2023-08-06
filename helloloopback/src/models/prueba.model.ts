@@ -1,5 +1,5 @@
 import {Entity, model, property} from '@loopback/repository';
-
+//creado con lb4 model
 @model()
 export class Prueba extends Entity {
   @property({
