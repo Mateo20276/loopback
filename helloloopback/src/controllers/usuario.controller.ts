@@ -19,7 +19,8 @@ import {
 } from '@loopback/rest';
 import {Credencial, Usuario} from '../models';
 import {UsuarioRepository} from '../repositories';
-
+import { Encryptado } from '../services/encriptado';
+import { ServiceKeys as Keys } from '../Keys/Service-keys';
 export class UsuarioController {
   constructor(
     @repository(UsuarioRepository)
@@ -44,6 +45,10 @@ export class UsuarioController {
     })
     usuario: Omit<Usuario, 'id'>,
   ): Promise<Usuario> {
+    let password1 = new Encryptado(Keys.MD5).Encrypt(usuario.password);
+    let password2 = new Encryptado(Keys.MD5).Encrypt(password1);
+    usuario.password = password1;
+
     return this.usuarioRepository.create(usuario);
   }
 
