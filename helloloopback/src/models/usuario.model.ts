@@ -13,14 +13,14 @@ export class Usuario extends Entity {
     type: 'string',
     required: true,
   })
-  usernam: string;
+  username: string;
 
   @property({
     type: 'string',
-    required: true,
+    default: true,
   })
   password: string;
-/*
+
   @property({
     type: 'string',
     required: true,
@@ -56,7 +56,6 @@ export class Usuario extends Entity {
     required: true,
   })
   reset_password_token_expire: string;
-*/
 
   constructor(data?: Partial<Usuario>) {
     super(data);
