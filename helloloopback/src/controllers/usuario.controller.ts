@@ -16,15 +16,24 @@ import {
   del,
   requestBody,
   response,
+  HttpErrors,
 } from '@loopback/rest';
-import {Credencial, Usuario} from '../models';
-import {UsuarioRepository} from '../repositories';
+import {Login, Usuario} from '../models';
+import {Credenciales} from '../models';
+import {LoginRepository, UsuarioRepository} from '../repositories';
 import { Encryptado } from '../services/encriptado';
 import { ServiceKeys as Keys } from '../Keys/Service-keys';
+import { service } from '@loopback/core';
+import { authentication } from '../services/autenticacion';
+import { Http2ServerRequest } from 'http2';
 export class UsuarioController {
   constructor(
     @repository(UsuarioRepository)
     public usuarioRepository : UsuarioRepository,
+    @service(authentication)
+    public servicioseguridad: authentication,
+    @repository(LoginRepository)
+    public loginrepository: LoginRepository
   ) {}
 
   @post('/usuarios')
@@ -45,8 +54,8 @@ export class UsuarioController {
     })
     usuario: Omit<Usuario, 'id'>,
   ): Promise<Usuario> {
+    //cifrar password
     let password1 = new Encryptado(Keys.MD5).Encrypt(usuario.password);
-    let password2 = new Encryptado(Keys.MD5).Encrypt(password1);
     usuario.password = password1;
 
     return this.usuarioRepository.create(usuario);
@@ -152,25 +161,45 @@ export class UsuarioController {
   async deleteById(@param.path.number('id') id: number): Promise<void> {
     await this.usuarioRepository.deleteById(id);
   }
-// Seguridad
- @post("/identificar_usuario",{
-  responses:{
-    '200':{
-      description:"Identifidacion de usuarios"
-    }
+
+
+/*
+  2FA
+*/
+
+@post('/identificar-usuario')
+@response(200,{
+  description:"identificar usuario",
+  content:{'application/json':{schema:getModelSchemaRef(Credenciales)}}
+   
+})
+  async identificarusuario(
+    @requestBody(
+      {
+      content:{
+        'aplication/json':{
+            schema:getModelSchemaRef(Credenciales)
+          }
+        }
+      }
+    )
+    credenciales: Credenciales
+  ):Promise<object>{
+    let usuario = await this.servicioseguridad.identificarusuario(credenciales);
+  if(usuario){
+    let c2fa = this.servicioseguridad.generar2fa(6);
+    let login: Login = new Login();
+    login.usuarioId = usuario.id!;
+    login.codigo2FA = c2fa;
+    login.token = "";
+    login.active = false;
+    this.loginrepository.create(login);
+    return Usuario;
+    
+      }
+      return new  HttpErrors[401]("Credenciales incorrectas")
   }
- })
- async identificar(
-  @requestBody() credenciales: Credencial
- ): Promise<Usuario| null>{
-  let usuario = await this.usuarioRepository.findOne({
-    where:{
-      email: credenciales.Usuario,
-      password: credenciales.Password
-    }
-  });
-  return usuario;
- }
+
 
 }
 
