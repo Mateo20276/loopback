@@ -1,4 +1,5 @@
-import {Entity, model, property} from '@loopback/repository';
+import {Entity, model, property, hasMany} from '@loopback/repository';
+import {Log} from './log.model';
 
 @model()
 export class Usuario extends Entity {
@@ -56,6 +57,9 @@ export class Usuario extends Entity {
     required: true,
   })
   reset_password_token_expire: string;
+
+  @hasMany(() => Log)
+  logs: Log[];
 
   constructor(data?: Partial<Usuario>) {
     super(data);
