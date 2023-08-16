@@ -18,15 +18,20 @@ export class Login extends Entity {
 
   @property({
     type: 'boolean',
-    required: true,
   })
-  active: boolean;
+  active?: boolean;
 
   @property({
     type: 'string',
     required: true,
   })
   token: string;
+
+  @property({
+    type: 'boolean',
+    required: true,
+  })
+  estadocodigo2fa: boolean;
 
   @belongsTo(() => Usuario)
   usuarioId: number;

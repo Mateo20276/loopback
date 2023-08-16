@@ -18,7 +18,7 @@ import {
   response,
   HttpErrors,
 } from '@loopback/rest';
-import {Login, Usuario} from '../models';
+import {Codigo2Fa, Login, Usuario} from '../models';
 import {Credenciales} from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
 import { Encryptado } from '../services/encriptado';
@@ -115,13 +115,14 @@ export class UsuarioController {
     content: {
       'application/json': {
         schema: getModelSchemaRef(Usuario, {includeRelations: true}),
+        
       },
     },
   })
   async findById(
     @param.path.number('id') id: number,
     @param.filter(Usuario, {exclude: 'where'}) filter?: FilterExcludingWhere<Usuario>
-  ): Promise<Usuario> {
+  ): Promise<Usuario> {   
     return this.usuarioRepository.findById(id, filter);
   }
 
@@ -170,7 +171,7 @@ export class UsuarioController {
 @post('/identificar-usuario')
 @response(200,{
   description:"identificar usuario",
-  content:{'application/json':{schema:getModelSchemaRef(Credenciales)}}
+  content:{'application/json':{schema:getModelSchemaRef(Usuario)}}
    
 })
   async identificarusuario(
@@ -185,6 +186,7 @@ export class UsuarioController {
     )
     credenciales: Credenciales
   ):Promise<object>{
+    console.log("buscarndo");
     let usuario = await this.servicioseguridad.identificarusuario(credenciales);
   if(usuario){
     let c2fa = this.servicioseguridad.generar2fa(6);
@@ -199,6 +201,42 @@ export class UsuarioController {
       }
       return new  HttpErrors[401]("Credenciales incorrectas")
   }
+
+  @post('/identificar-2fa')
+  @response(200,{
+    description:"validar codigo 2fa",
+     
+  })
+    async verificarcodigo2fa(
+      @requestBody(
+        {
+        content:{
+          'aplication/json':{
+              schema:getModelSchemaRef(Codigo2Fa)
+            }
+          }
+        }
+      )
+      credenciales: Codigo2Fa
+    ):Promise<object>{
+      let usuario = await this.servicioseguridad.validarcodigo2fa(credenciales);
+      if(usuario){
+      let token = this.servicioseguridad.creartoken(usuario);
+      if (usuario){
+        usuario.password = "";
+        return {
+          user:{
+            user:usuario,
+            token: token
+          
+          },
+          
+        };
+      }
+    }
+      return new  HttpErrors[401]("Codigo 2fa invalido")
+    }
+  
 
 
 }

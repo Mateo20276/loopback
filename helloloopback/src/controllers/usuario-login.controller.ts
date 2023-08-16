@@ -1,4 +1,4 @@
-import {
+/*import {
   Count,
   CountSchema,
   Filter,
@@ -108,3 +108,4 @@ export class UsuarioLoginController {
     return this.usuarioRepository.logins(id).delete(where);
   }
 }
+*/

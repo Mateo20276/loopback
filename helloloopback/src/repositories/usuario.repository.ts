@@ -10,13 +10,13 @@ export class UsuarioRepository extends DefaultCrudRepository<
   UsuarioRelations
 > {
 
-  public readonly logins: HasManyRepositoryFactory<Login, typeof Usuario.prototype.id>;
+  //public readonly logins: HasManyRepositoryFactory<Login, typeof Usuario.prototype.id>;
 
   constructor(
-    @inject('datasources.postgres') dataSource: PostgresDataSource, @repository.getter('LoginRepository') protected loginRepositoryGetter: Getter<LoginRepository>,
+    @inject('datasources.postgres') dataSource: PostgresDataSource,// @repository.getter('LoginRepository') protected loginRepositoryGetter: Getter<LoginRepository>,
   ) {
     super(Usuario, dataSource);
-    this.logins = this.createHasManyRepositoryFactoryFor('logins', loginRepositoryGetter,);
-    this.registerInclusionResolver('logins', this.logins.inclusionResolver);
+    //this.logins = this.createHasManyRepositoryFactoryFor('logins', loginRepositoryGetter,);
+    //this.registerInclusionResolver('logins', this.logins.inclusionResolver);
   }
 }

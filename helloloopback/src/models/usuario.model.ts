@@ -58,8 +58,8 @@ export class Usuario extends Entity {
   })
   reset_password_token_expire: string;
 
-  @hasMany(() => Login)
-  logins: Login[];
+  //@hasMany(() => Login)
+  //logins: Login[];
 
   constructor(data?: Partial<Usuario>) {
     super(data);
