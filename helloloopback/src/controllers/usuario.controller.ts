@@ -18,11 +18,13 @@ import {
   response,
   HttpErrors,
 } from '@loopback/rest';
-import {Credencial, Usuario,Log, Codigo2Fa} from '../models';
+import {Credencial, Usuario,Log, Codigo2Fa, Credencialcambioclave, Notificacionsms} from '../models';
 import {LogRepository, UsuarioRepository} from '../repositories';
 import { Encryptado } from '../services/encriptado';
 import { ServiceKeys as Keys } from '../Keys/Service-keys';
 import { Seguridad } from '../services/seguridad';
+import { NotificacionServices } from '../services/notificacion';
+import { rejects } from 'assert';
 
 export class UsuarioController {
   constructor(
@@ -50,12 +52,29 @@ export class UsuarioController {
       },
     })
     usuario: Omit<Usuario, 'id'>,
-  ): Promise<Usuario> {
+  ): Promise<Object> {
+    //verifica usuario y encripa password
+    let usuariorep= await this.usuarioRepository.findOne({
+      where:{
+        email: usuario.email,        
+      }
+    });
+    if (usuariorep){return new HttpErrors[401]("Email ya registrado")}
+    else{
     let password1 = new Encryptado(Keys.MD5).Encrypt(usuario.password);
+    let codigo2fa = new Seguridad(this.usuarioRepository, this.logrepositorio).Crearcodigo2fa(5);
+    let datos = new Notificacionsms();
+    datos.destinatario = usuario.phone;
+    datos.mensaje = `Codigo2FA:${codigo2fa}`;
+    let mensaje = new NotificacionServices().EnviarSms(datos);
+    
+    usuario.c2fa = codigo2fa;
+    usuario.c2fastate = false;
     //let password2 = new Encryptado(Keys.MD5).Encrypt(password1);
     usuario.password = password1;
 
     return this.usuarioRepository.create(usuario);
+  } 
   }
 
   @get('/usuarios/count')
@@ -179,11 +198,8 @@ export class UsuarioController {
     credenciales: Credencial
   ):Promise<object>{
     let usuario = await new Seguridad(this.usuarioRepository, this.logrepositorio).identificarusuario(credenciales);
-    console.log("Funciona1");
     if (usuario){
-      console.log("Funciona2");
       let codigo2fa = new Seguridad(this.usuarioRepository, this.logrepositorio).Crearcodigo2fa(5);
-      console.log("Funciona3");
       let log:Log = new Log();
       log.usuarioId = usuario.id!;
       log.codigo2fa = codigo2fa;
@@ -193,7 +209,7 @@ export class UsuarioController {
       this.logrepositorio.create(log);
       return usuario;
     }
-    return new HttpErrors[401]("Credenciales incorrectas")
+    return new HttpErrors[401]("Credenciales incorrectas o invalida")
   }
 
   @post('/verificar-2fa')
@@ -214,30 +230,75 @@ export class UsuarioController {
   ):Promise<object>{
     let usuario = await new Seguridad(this.usuarioRepository, this.logrepositorio).valiradcodig2fa(credenciales);
     if (usuario){
-    let token = new Seguridad(this.usuarioRepository, this.logrepositorio).creartoken(usuario);
-  
-    if (usuario){
-      try{
-        let log= await this.logrepositorio.findOne({
-            where:{
-              usuarioId:usuario.id,
-              estadocodigo2fa: false 
-            }
-          });
-          log!.estadocodigo2fa = true;
+     let token = new Seguridad(this.usuarioRepository, this.logrepositorio).creartoken(usuario);  
+       let log= await this.logrepositorio.findOne({
+          where:{
+            usuarioId:usuario.id,
+            estadocodigo2fa: false 
+          }
+        });
+        log!.estadocodigo2fa = true;
           this.logrepositorio.updateById(log?.id, log!);
-        }catch{
-          console.log("no se cambio el estado del token")
-        
-      }
-
-      return{ user: usuario,token: token
-      }
-    }
+          return{ user: usuario,token: token}
   }
     
     return new HttpErrors[401]("Codigo 2fa invalido")
   }
+
+  @post('/validar-registro-usuario')
+  @response(200,{
+    description:"Validacion de registro de usuario ",
+  })
+  async verificarcodig2faregistro(
+    @requestBody(
+      {
+        content:{
+          'application/json':{
+            schema:getModelSchemaRef(Codigo2Fa)             
+          }
+        }
+      }
+    )
+    credenciales: Codigo2Fa
+  ):Promise<object> {
+    try{let usuario= await this.usuarioRepository.findById(credenciales.usuarioId);
+      if (usuario.c2fa == credenciales.codigo2fa){
+        usuario.c2fastate = true;  
+        this.usuarioRepository.updateById(credenciales.usuarioId, usuario);      
+      }
+    return credenciales;}
+
+    catch{return new HttpErrors[401]("Usuario invalido")}
+
+  }
+
+
+
+  @post('/cambio-contrasena')
+  @response(200,{
+    description:"cambio de contrasena ",
+  })
+  async recuperarcontrasena(
+    @requestBody() datos: Credencialcambioclave,
+ 
+  ):Promise<object>{
+    try{let usuario= await this.usuarioRepository.findById(datos.usuarioid);
+
+      
+        if((usuario.password == datos.claveactual)&&(datos.nuevaclave1 == datos.nuevaclave2)){
+          let password = new Encryptado(Keys.MD5).Encrypt(datos.nuevaclave1);
+          usuario.password = password;
+          this.usuarioRepository.updateById(datos.usuarioid, usuario);            
+         return datos;
+        }else{return new HttpErrors[401]("Datos incorrectos");}
+
+    }
+    catch{return new HttpErrors[401]("Usuario invalido");}
+  }
+
+
+
+
 
 
  /*@post("/identificar_usuario",{
@@ -260,5 +321,5 @@ export class UsuarioController {
   return usuario;
  }
 */
-}
 
+}

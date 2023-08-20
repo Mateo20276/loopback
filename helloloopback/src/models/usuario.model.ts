@@ -15,6 +15,25 @@ export class Usuario extends Entity {
     required: true,
   })
   username: string;
+  
+  @property({
+    type: 'string',
+    required: true,
+  })
+  c2fa: string;
+
+  @property({
+    type: 'boolean',
+    required: true,
+  })
+  c2fastate: boolean;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  phone: string;
+
 
   @property({
     type: 'string',

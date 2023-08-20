@@ -30,7 +30,8 @@ export class  Seguridad{
    async identificarusuario(credenciales: Credencial):Promise<Usuario|null>{
         let usuario = await this.usuariorepositorio.findOne({where:{
             email: credenciales.email,
-            password: credenciales.Password
+            password: credenciales.Password,
+            c2fastate: true
         }});
         return usuario as Usuario;
     }
