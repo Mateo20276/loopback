@@ -47,35 +47,6 @@ export class Usuario extends Entity {
   })
   email: string;
 
-  @property({
-    type: 'boolean',
-    required: true,
-  })
-  active: boolean;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  activate_token: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  activate_token_expire: string;
-
-  @property({
-    type: 'date',
-    required: true,
-  })
-  reset_password_token: string;
-
-  @property({
-    type: 'date',
-    required: true,
-  })
-  reset_password_token_expire: string;
 
   @hasMany(() => Log)
   logs: Log[];

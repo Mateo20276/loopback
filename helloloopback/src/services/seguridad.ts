@@ -2,7 +2,8 @@ import { repository } from "@loopback/repository";
 import { Codigo2Fa, Credencial, Log } from "../models";
 import { LogRepository, UsuarioRepository } from "../repositories";
 import { Usuario} from "../models";
-var jwt = require('jsonwebtoken')
+var jwt = require('jsonwebtoken');
+
 
 var generator = require('generate-password');
 
@@ -54,11 +55,16 @@ export class  Seguridad{
 //generar el token
     creartoken(usuario:Usuario):string{
         let datos= {
-            username: usuario.username,
-            email: usuario.email
+            username:usuario.username,
+            email:usuario.email
         }
-        let token = jwt.sign(datos, "asdfsad")
+        let token = jwt.sign(datos, "asdfsad",{ expiresIn: '1h' })
         return token
 
+    }
+
+    verificartoken(token: string){
+        let decoded = jwt.verify(token,"asdfsad");
+        return decoded;
     }
 }

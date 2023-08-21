@@ -25,6 +25,7 @@ import { ServiceKeys as Keys } from '../Keys/Service-keys';
 import { Seguridad } from '../services/seguridad';
 import { NotificacionServices } from '../services/notificacion';
 import { rejects } from 'assert';
+import { authenticate } from '@loopback/authentication';
 
 export class UsuarioController {
   constructor(
@@ -189,8 +190,7 @@ export class UsuarioController {
       {
         content:{
           'application/json':{
-            schema:getModelSchemaRef(Credencial
-              )
+            schema:getModelSchemaRef(Credencial)
           }
         }
       }
@@ -212,6 +212,7 @@ export class UsuarioController {
     return new HttpErrors[401]("Credenciales incorrectas o invalida")
   }
 
+//verificar 2fa de logeo  
   @post('/verificar-2fa')
   @response(200,{
     description:"validar codigo 2fa",
@@ -238,13 +239,14 @@ export class UsuarioController {
           }
         });
         log!.estadocodigo2fa = true;
-          this.logrepositorio.updateById(log?.id, log!);
-          return{ user: usuario,token: token}
+        this.logrepositorio.updateById(log?.id, log!);
+        return{ user: usuario,token: token}
   }
     
     return new HttpErrors[401]("Codigo 2fa invalido")
   }
 
+//verificar 2fa en registro usuario  
   @post('/validar-registro-usuario')
   @response(200,{
     description:"Validacion de registro de usuario ",
@@ -272,8 +274,8 @@ export class UsuarioController {
 
   }
 
-
-
+//cambio de contrasena con token
+  @authenticate('token')
   @post('/cambio-contrasena')
   @response(200,{
     description:"cambio de contrasena ",

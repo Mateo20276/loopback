@@ -9,6 +9,9 @@ import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
+import { AuthenticationComponent } from '@loopback/authentication/dist/authentication.component';
+import { Strategy } from './strategies/strategia';
+import { registerAuthenticationStrategy } from '@loopback/authentication/dist/types';
 
 export {ApplicationConfig};
 
@@ -40,5 +43,10 @@ export class HelloloopbackApplication extends BootMixin(
         nested: true,
       },
     };
+
+    registerAuthenticationStrategy(this,Strategy);
+    this.component(AuthenticationComponent);
+
+
   }
 }
