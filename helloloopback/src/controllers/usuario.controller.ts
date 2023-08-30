@@ -26,13 +26,18 @@ import { Seguridad } from '../services/seguridad';
 import { NotificacionServices } from '../services/notificacion';
 import { rejects } from 'assert';
 import { authenticate } from '@loopback/authentication';
+import { inject } from '@loopback/context';
+import { UserProfile, SecurityBindings } from '@loopback/security';
+
 
 export class UsuarioController {
   constructor(
     @repository(UsuarioRepository)
     public usuarioRepository : UsuarioRepository,
     @repository(LogRepository)
-    public logrepositorio: LogRepository
+    public logrepositorio: LogRepository,
+    @inject(SecurityBindings.USER, { optional: true })
+    private usuarioAutenticado: UserProfile,
 
   ) {}
 
@@ -67,14 +72,15 @@ export class UsuarioController {
     let datos = new Notificacionsms();
     datos.destinatario = usuario.phone;
     datos.mensaje = `Codigo2FA:${codigo2fa}`;
-    let mensaje = new NotificacionServices().EnviarSms(datos);
+    let token=  new Seguridad(this.usuarioRepository, this.logrepositorio).creartoken(usuario);
+    //let mensaje = new NotificacionServices().EnviarSms(datos);
     
     usuario.c2fa = codigo2fa;
     usuario.c2fastate = false;
     //let password2 = new Encryptado(Keys.MD5).Encrypt(password1);
     usuario.password = password1;
 
-    return this.usuarioRepository.create(usuario);
+    return {Usuario: this.usuarioRepository.create(usuario),token: token};
   } 
   }
 
@@ -247,10 +253,36 @@ export class UsuarioController {
   }
 
 //verificar 2fa en registro usuario  
+  @authenticate('token')
   @post('/validar-registro-usuario')
   @response(200,{
     description:"Validacion de registro de usuario ",
   })
+    async verificarusuariotoken()
+    : Promise<object>{
+      let usuario = await this.usuarioRepository.findOne({
+        where:{
+          email: this.usuarioAutenticado.email,
+          username: this.usuarioAutenticado.username,
+          c2fastate: false
+        }
+      
+      })
+      if(usuario){
+        usuario.c2fastate = true; 
+        this.usuarioRepository.updateById(usuario.id, usuario);
+        return {usuario}
+      }
+      
+      return new HttpErrors[401]("No se pudo verificar el usuario");
+  }
+  
+  
+  
+  
+  
+  
+  /*
   async verificarcodig2faregistro(
     @requestBody(
       {
@@ -272,7 +304,7 @@ export class UsuarioController {
 
     catch{return new HttpErrors[401]("Usuario invalido")}
 
-  }
+  }*/
 
 //cambio de contrasena con token
   @authenticate('token')

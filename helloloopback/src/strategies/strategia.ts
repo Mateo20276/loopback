@@ -27,12 +27,11 @@ export class Strategy implements AuthenticationStrategy{
         }
         let info = new Seguridad(this.usuariorepositorio, this.logrepositorio).verificartoken(token);
         if (info){
-            console.log("funciona");
-            console.log(info.email);
-            console.log("funciona1");
+
 
             let perfil: UserProfile = Object.assign({                
-                email: info.email
+                email: info.email,
+                username: info.username
             });
             return perfil; 
         }
