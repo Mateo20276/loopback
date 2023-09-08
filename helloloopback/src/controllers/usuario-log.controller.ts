@@ -1,3 +1,4 @@
+
 import {
   Count,
   CountSchema,
@@ -26,6 +27,7 @@ export class UsuarioLogController {
     @repository(UsuarioRepository) protected usuarioRepository: UsuarioRepository,
   ) { }
 
+/*
   @get('/usuarios/{id}/logs', {
     responses: {
       '200': {
@@ -107,4 +109,5 @@ export class UsuarioLogController {
   ): Promise<Count> {
     return this.usuarioRepository.logs(id).delete(where);
   }
+  */
 }

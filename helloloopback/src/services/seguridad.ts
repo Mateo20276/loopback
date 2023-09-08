@@ -2,6 +2,7 @@ import { repository } from "@loopback/repository";
 import { Codigo2Fa, Credencial, Log } from "../models";
 import { LogRepository, UsuarioRepository } from "../repositories";
 import { Usuario} from "../models";
+import { HttpErrors} from "@loopback/rest";
 var jwt = require('jsonwebtoken');
 
 
@@ -32,7 +33,7 @@ export class  Seguridad{
         let usuario = await this.usuariorepositorio.findOne({where:{
             email: credenciales.email,
             password: credenciales.Password,
-            c2fastate: true
+            activo: true
         }});
         return usuario as Usuario;
     }
@@ -53,18 +54,18 @@ export class  Seguridad{
         }
     }
 //generar el token
-    creartoken(usuario:Usuario):string{
+    creartoken(usuario:Usuario, tipo:string):string{
         let datos= {
             username:usuario.username,
             email:usuario.email
         }
-        let token = jwt.sign(datos, "asdfsad",{ expiresIn: '1h' })
+        let token = jwt.sign(datos, tipo,{ expiresIn: '1h' })
         return token
 
     }
 
-    verificartoken(token: string){
-        let decoded = jwt.verify(token,"asdfsad");
+    verificartoken(token: string, tipo:string){
+        let decoded = jwt.verify(token,tipo);
         return decoded;
     }
 }

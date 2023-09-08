@@ -16,17 +16,17 @@ export class Usuario extends Entity {
   })
   username: string;
   
-  @property({
+/*  @property({
     type: 'string',
     required: true,
   })
-  c2fa: string;
+  c2fa: string;*/
 
   @property({
     type: 'boolean',
     required: true,
   })
-  c2fastate: boolean;
+  activo: boolean;
 
   @property({
     type: 'string',

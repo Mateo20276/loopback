@@ -22,18 +22,6 @@ export class Log extends Entity {
   })
   estadocodigo2fa: boolean;
 
-  @property({
-    type: 'string',
-    required: true,
-  })
-  token: string;
-
-  @property({
-    type: 'boolean',
-    required: true,
-  })
-  estadotoken: boolean;
-
   @belongsTo(() => Usuario)
   usuarioId: number;
 

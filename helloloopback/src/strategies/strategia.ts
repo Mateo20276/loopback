@@ -9,6 +9,7 @@ import { LogRepository, UsuarioRepository } from "../repositories";
 import { repository } from "@loopback/repository";
 import { Seguridad } from '../services/seguridad';
 import { UserProfile } from "@loopback/security";
+import { exit } from "process";
 
 export class Strategy implements AuthenticationStrategy{
     name: string = 'token';
@@ -25,19 +26,23 @@ export class Strategy implements AuthenticationStrategy{
         if (!token) {
             throw new HttpErrors[401]("No existe token en la solicitud.")
         }
-        let info = new Seguridad(this.usuariorepositorio, this.logrepositorio).verificartoken(token);
-        if (info){
-
-
-            let perfil: UserProfile = Object.assign({                
-                email: info.email,
-                username: info.username
-            });
-            return perfil; 
+        let info = {email: "", username:""};
+        try{info = new Seguridad(this.usuariorepositorio, this.logrepositorio).verificartoken(token,"crear usuario");}
+            catch{
+                try{
+                    info = new Seguridad(this.usuariorepositorio, this.logrepositorio).verificartoken(token,"cambio contrasena");
+                }
+                    catch{
+                        throw new HttpErrors[401]("Token enviado invalido");
+                    }
+            }
+        if (info.email != ""){
+        let perfil: UserProfile = Object.assign({                
+            email: info.email,
+            username: info.username
+        });
+        return perfil; 
         }
-        else {throw new HttpErrors[401]("Token enviado invalido")}
-
-
     }
     
 }

@@ -41,7 +41,7 @@ export class UsuarioController {
 
   ) {}
 
-  @post('/usuarios')
+  @post('/1crear-usuario')
   @response(200, {
     description: 'Usuario model instance',
     content: {'application/json': {schema: getModelSchemaRef(Usuario)}},
@@ -52,7 +52,7 @@ export class UsuarioController {
         'application/json': {
           schema: getModelSchemaRef(Usuario, {
             title: 'NewUsuario',
-            exclude: ['id'],
+            exclude: ['id','activo'],
           }),
         },
       },
@@ -71,20 +71,20 @@ export class UsuarioController {
     let codigo2fa = new Seguridad(this.usuarioRepository, this.logrepositorio).Crearcodigo2fa(5);
     let datos = new Notificacionsms();
     datos.destinatario = usuario.phone;
-    datos.mensaje = `Codigo2FA:${codigo2fa}`;
-    let token=  new Seguridad(this.usuarioRepository, this.logrepositorio).creartoken(usuario);
-    //let mensaje = new NotificacionServices().EnviarSms(datos);
-    
-    usuario.c2fa = codigo2fa;
-    usuario.c2fastate = false;
+    let token=  new Seguridad(this.usuarioRepository, this.logrepositorio).creartoken(usuario, "crear usuario");
+    datos.mensaje = 'Token:', token;
+    let mensaje = new NotificacionServices().EnviarSms(datos);
+
+    usuario.activo = false;
     //let password2 = new Encryptado(Keys.MD5).Encrypt(password1);
     usuario.password = password1;
+    
 
     return {Usuario: this.usuarioRepository.create(usuario),token: token};
   } 
   }
 
-  @get('/usuarios/count')
+ /* @get('/usuarios/count')
   @response(200, {
     description: 'Usuario model count',
     content: {'application/json': {schema: CountSchema}},
@@ -93,7 +93,7 @@ export class UsuarioController {
     @param.where(Usuario) where?: Where<Usuario>,
   ): Promise<Count> {
     return this.usuarioRepository.count(where);
-  }
+  }*/
 
   @get('/usuarios')
   @response(200, {
@@ -113,7 +113,7 @@ export class UsuarioController {
     return this.usuarioRepository.find(filter);
   }
 
-  @patch('/usuarios')
+ /* @patch('/usuarios')
   @response(200, {
     description: 'Usuario PATCH success count',
     content: {'application/json': {schema: CountSchema}},
@@ -130,7 +130,7 @@ export class UsuarioController {
     @param.where(Usuario) where?: Where<Usuario>,
   ): Promise<Count> {
     return this.usuarioRepository.updateAll(usuario, where);
-  }
+  }*/
 
   @get('/usuarios/{id}')
   @response(200, {
@@ -147,7 +147,7 @@ export class UsuarioController {
   ): Promise<Usuario> {
     return this.usuarioRepository.findById(id, filter);
   }
-
+/*
   @patch('/usuarios/{id}')
   @response(204, {
     description: 'Usuario PATCH success',
@@ -165,7 +165,7 @@ export class UsuarioController {
   ): Promise<void> {
     await this.usuarioRepository.updateById(id, usuario);
   }
-
+*/
   @put('/usuarios/{id}')
   @response(204, {
     description: 'Usuario PUT success',
@@ -186,7 +186,7 @@ export class UsuarioController {
   }
 // Seguridad(identificacion de usuario)
 
-  @post('/identificar_usuario')
+  @post('/3identificar_usuario')
   @response(200,{
     description:"Identifidacion de usuarios",
     content:{'application/json':{schema: getModelSchemaRef(Usuario)}}
@@ -210,8 +210,6 @@ export class UsuarioController {
       log.usuarioId = usuario.id!;
       log.codigo2fa = codigo2fa;
       log.estadocodigo2fa = false;
-      log.token = "a";
-      log.estadotoken = false;
       this.logrepositorio.create(log);
       return usuario;
     }
@@ -219,7 +217,7 @@ export class UsuarioController {
   }
 
 //verificar 2fa de logeo  
-  @post('/verificar-2fa')
+  @post('/4verificar-2fa')
   @response(200,{
     description:"validar codigo 2fa",
   })
@@ -236,8 +234,7 @@ export class UsuarioController {
     credenciales: Codigo2Fa
   ):Promise<object>{
     let usuario = await new Seguridad(this.usuarioRepository, this.logrepositorio).valiradcodig2fa(credenciales);
-    if (usuario){
-     let token = new Seguridad(this.usuarioRepository, this.logrepositorio).creartoken(usuario);  
+    if (usuario){ 
        let log= await this.logrepositorio.findOne({
           where:{
             usuarioId:usuario.id,
@@ -246,15 +243,15 @@ export class UsuarioController {
         });
         log!.estadocodigo2fa = true;
         this.logrepositorio.updateById(log?.id, log!);
-        return{ user: usuario,token: token}
+        return{ user: usuario}
   }
     
     return new HttpErrors[401]("Codigo 2fa invalido")
   }
 
-//verificar 2fa en registro usuario  
+//verificar con token en registro usuario  
   @authenticate('token')
-  @post('/validar-registro-usuario')
+  @post('/2validar-registro-usuario')
   @response(200,{
     description:"Validacion de registro de usuario ",
   })
@@ -264,12 +261,12 @@ export class UsuarioController {
         where:{
           email: this.usuarioAutenticado.email,
           username: this.usuarioAutenticado.username,
-          c2fastate: false
+          activo: false
         }
       
       })
       if(usuario){
-        usuario.c2fastate = true; 
+        usuario.activo = true; 
         this.usuarioRepository.updateById(usuario.id, usuario);
         return {usuario}
       }
@@ -277,7 +274,25 @@ export class UsuarioController {
       return new HttpErrors[401]("No se pudo verificar el usuario");
   }
   
-  
+  @post('/token-cambio-contrasena')
+  @response(200,{
+    description:"Validacion de registro de usuario ",
+  })
+    async tokencambiocontrasena(
+      @requestBody() datos:{
+        email: string;
+      })
+    : Promise<object>{
+      let usuariorep= await this.usuarioRepository.findOne({
+        where:{
+          email: datos.email,        
+        }});
+      if (usuariorep != null){
+        let token = new Seguridad(this.usuarioRepository, this.logrepositorio).creartoken(usuariorep, "cambio contrasena");
+      return {token:token}}
+      else{return new HttpErrors[401]("Usuario no encontrado");}
+       
+    }
   
   
   

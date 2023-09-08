@@ -25,7 +25,7 @@ export class LogController {
     @repository(LogRepository)
     public logRepository : LogRepository,
   ) {}
-
+/*
   @post('/logs')
   @response(200, {
     description: 'Log model instance',
@@ -57,7 +57,7 @@ export class LogController {
   ): Promise<Count> {
     return this.logRepository.count(where);
   }
-
+*/
   @get('/logs')
   @response(200, {
     description: 'Array of Log model instances',
@@ -75,7 +75,7 @@ export class LogController {
   ): Promise<Log[]> {
     return this.logRepository.find(filter);
   }
-
+/*
   @patch('/logs')
   @response(200, {
     description: 'Log PATCH success count',
@@ -94,7 +94,7 @@ export class LogController {
   ): Promise<Count> {
     return this.logRepository.updateAll(log, where);
   }
-
+*/
   @get('/logs/{id}')
   @response(200, {
     description: 'Log model instance',
@@ -110,7 +110,7 @@ export class LogController {
   ): Promise<Log> {
     return this.logRepository.findById(id, filter);
   }
-
+/*
   @patch('/logs/{id}')
   @response(204, {
     description: 'Log PATCH success',
@@ -146,5 +146,5 @@ export class LogController {
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
     await this.logRepository.deleteById(id);
-  }
+  }*/
 }
